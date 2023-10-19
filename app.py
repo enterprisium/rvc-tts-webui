@@ -36,12 +36,14 @@ tts_voice_list = asyncio.get_event_loop().run_until_complete(edge_tts.list_voice
 tts_voices = [f"{v['ShortName']}-{v['Gender']}" for v in tts_voice_list]
 
 model_root = "weights"
-models = [
-    d for d in os.listdir(model_root) if os.path.isdir(os.path.join(model_root, d))
-]
-if len(models) == 0:
+if models := [
+    d
+    for d in os.listdir(model_root)
+    if os.path.isdir(os.path.join(model_root, d))
+]:
+    models.sort()
+else:
     raise ValueError("No model found in `weights` folder")
-models.sort()
 
 
 def model_data(model_name):
@@ -51,7 +53,7 @@ def model_data(model_name):
         for f in os.listdir(os.path.join(model_root, model_name))
         if f.endswith(".pth")
     ]
-    if len(pth_files) == 0:
+    if not pth_files:
         raise ValueError(f"No pth file found in {model_root}/{model_name}")
     pth_path = pth_files[0]
     print(f"Loading {pth_path}")
@@ -76,25 +78,19 @@ def model_data(model_name):
     net_g.load_state_dict(cpt["weight"], strict=False)
     print("Model loaded")
     net_g.eval().to(config.device)
-    if config.is_half:
-        net_g = net_g.half()
-    else:
-        net_g = net_g.float()
+    net_g = net_g.half() if config.is_half else net_g.float()
     vc = VC(tgt_sr, config)
-    # n_spk = cpt["config"][-3]
-
-    index_files = [
+    if index_files := [
         os.path.join(model_root, model_name, f)
         for f in os.listdir(os.path.join(model_root, model_name))
         if f.endswith(".index")
-    ]
-    if len(index_files) == 0:
-        print("No index file found")
-        index_file = ""
-    else:
+    ]:
         index_file = index_files[0]
         print(f"Index file found: {index_file}")
 
+    else:
+        print("No index file found")
+        index_file = ""
     return tgt_sr, net_g, vc, version, index_file, if_f0
 
 
@@ -106,10 +102,7 @@ def load_hubert():
     )
     hubert_model = models[0]
     hubert_model = hubert_model.to(config.device)
-    if config.is_half:
-        hubert_model = hubert_model.half()
-    else:
-        hubert_model = hubert_model.float()
+    hubert_model = hubert_model.half() if config.is_half else hubert_model.float()
     return hubert_model.eval()
 
 
@@ -152,10 +145,7 @@ def tts(
             )
         tgt_sr, net_g, vc, version, index_file, if_f0 = model_data(model_name)
         t0 = time.time()
-        if speed >= 0:
-            speed_str = f"+{speed}%"
-        else:
-            speed_str = f"{speed}%"
+        speed_str = f"+{speed}%" if speed >= 0 else f"{speed}%"
         asyncio.run(
             edge_tts.Communicate(
                 tts_text, "-".join(tts_voice.split("-")[:-1]), rate=speed_str

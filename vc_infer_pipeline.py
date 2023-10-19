@@ -177,10 +177,7 @@ class VC(object):
         protect,
     ):  # ,file_index,file_big_npy
         feats = torch.from_numpy(audio0)
-        if self.is_half:
-            feats = feats.half()
-        else:
-            feats = feats.float()
+        feats = feats.half() if self.is_half else feats.float()
         if feats.dim() == 2:  # double channels
             feats = feats.mean(-1)
         assert feats.dim() == 1, feats.dim()
@@ -199,8 +196,8 @@ class VC(object):
         if protect < 0.5 and pitch != None and pitchf != None:
             feats0 = feats.clone()
         if (
-            isinstance(index, type(None)) == False
-            and isinstance(big_npy, type(None)) == False
+            not isinstance(index, type(None))
+            and not isinstance(big_npy, type(None))
             and index_rate != 0
         ):
             npy = feats[0].cpu().numpy()
@@ -328,9 +325,7 @@ class VC(object):
             try:
                 with open(f0_file.name, "r") as f:
                     lines = f.read().strip("\n").split("\n")
-                inp_f0 = []
-                for line in lines:
-                    inp_f0.append([float(i) for i in line.split(",")])
+                inp_f0 = [[float(i) for i in line.split(",")] for line in lines]
                 inp_f0 = np.array(inp_f0, dtype="float32")
             except:
                 traceback.print_exc()

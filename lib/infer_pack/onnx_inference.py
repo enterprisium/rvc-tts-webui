@@ -6,7 +6,7 @@ import soundfile
 
 class ContentVec:
     def __init__(self, vec_path="pretrained/vec-768-layer-12.onnx", device=None):
-        print("load model(s) from {}".format(vec_path))
+        print(f"load model(s) from {vec_path}")
         if device == "cpu" or device is None:
             providers = ["CPUExecutionProvider"]
         elif device == "cuda":
@@ -142,4 +142,4 @@ class OnnxRVC:
 
         out_wav = self.forward(hubert, hubert_length, pitch, pitchf, ds, rnd).squeeze()
         out_wav = np.pad(out_wav, (0, 2 * self.hop_size), "constant")
-        return out_wav[0:org_length]
+        return out_wav[:org_length]

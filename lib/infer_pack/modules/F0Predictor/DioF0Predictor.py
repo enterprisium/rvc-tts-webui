@@ -56,8 +56,7 @@ class DioF0Predictor(F0Predictor):
             np.arange(0, len(source)),
             source,
         )
-        res = np.nan_to_num(target)
-        return res
+        return np.nan_to_num(target)
 
     def compute_f0(self, wav, p_len=None):
         if p_len is None:
